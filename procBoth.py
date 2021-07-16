@@ -1,5 +1,5 @@
 # -*-encoding:utf-8 -*-
-#/usr/bin/python3
+#/usb/bin/python3
 
 import pandas as pd
 import numpy as np
@@ -9,15 +9,17 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import scipy
 import time
-import datetime
 import os
 import csv
 import codecs
+import sys
 
 print(os.getcwd())
-outdir='fraud_data0602'
+indir=r'两家一起/摘取出数据/华安'
+outdir=r'两家一起/计算结果'
 loopdir=outdir + '/loops'
 badloopdir = outdir + '/badloops'
+suslipeidir = outdir + '/suslipei'
 
 isExists = os.path.exists('./'+outdir+'/partitions')
 if not isExists:
@@ -39,48 +41,40 @@ isExists = os.path.exists('./'+badloopdir+'')
 if not isExists:
     os.makedirs('./'+badloopdir+'')
 
-isExists = os.path.exists('./tmpout')
+isExists = os.path.exists('./'+suslipeidir+'')
 if not isExists:
-    os.makedirs('./tmpout')
-    
-samplenum=0
+    os.makedirs('./'+suslipeidir+'')
 
-if samplenum != 0:
-    juese = pd.read_csv(outdir + r'/juese.csv',encoding='utf8',dtype={0:np.object},nrows=samplenum)
-    baodan = pd.read_csv(outdir+r'/baodanxinxi.csv',encoding='utf8',dtype={0:np.object,1:np.object},nrows=samplenum)
-    chesun = pd.read_csv(outdir+r'/chesun.csv',encoding='utf8',dtype={0:np.object},nrows=samplenum)
-    shangzheinfo = pd.read_csv(outdir + r'/renshang.csv',encoding='utf8',dtype={0:np.object},nrows=samplenum)
-else:
-    juese = pd.read_csv(outdir + r'/juese.csv',encoding='utf8',dtype={0:np.object})
-    baodan = pd.read_csv(outdir+r'/baodanxinxi.csv',encoding='utf8',dtype={0:np.object,1:np.object})
-    chesun = pd.read_csv(outdir+r'/chesun.csv',encoding='utf8',dtype={0:np.object})
-    shangzheinfo = pd.read_csv(outdir + r'/renshang.csv',encoding='utf8',dtype={0:np.object})
+isExists = os.path.exists('./两家一起/tmplog')
+if not isExists:
+    os.makedirs('./两家一起/tmplog')
+
+
+#华安
+juese = pd.read_csv(indir + r'/保单角色信息表.csv',encoding='utf8',dtype={0:np.object})
+baodan = pd.read_csv(indir+r'/保单信息表.csv',encoding='utf8',dtype={0:np.object,1:np.object})
+chesun = pd.read_csv(indir+r'/车损信息.csv',encoding='utf8',dtype={0:np.object,3:np.object,5:np.object,8:np.object})
+shangzhe = pd.read_csv(indir + r'/人伤信息.csv',encoding='utf8',dtype={0:np.object})
     
-lipeiinfo = pd.read_csv(outdir+'/lipei.csv',encoding='utf8',dtype={0:np.object})
-peifuinfo = pd.read_csv(outdir+'/peifu.csv',encoding='utf8',dtype={0:np.object})
+lipeiinfo = pd.read_csv(indir+'/理赔信息表.csv',encoding='utf8',dtype={0:np.object,6:np.object,7:np.object,12:np.object,14:np.object,15:np.object})
+peifuinfo = pd.read_csv(indir+'/赔付信息表.csv',encoding='utf8',dtype={0:np.object})
 
 wentilipei = lipeiinfo[(lipeiinfo[r'案件状态']==r'零结')&(lipeiinfo[r'赔付金额']!=0)]
-wentilipei.to_csv('./tmpout/wentilipei.csv',sep=',',index=False)
+wentilipei.to_csv(r'./两家一起/tmplog/问题理赔.csv',sep=',',index=False)
 
 zhengchanglipei = lipeiinfo[(lipeiinfo[r'案件状态']==r'正常')]
-zhengchanglipei.to_csv('./tmpout/zhengchanglipei.csv',sep=',',index=False)
-
-
+zhengchanglipei.to_csv(r'./两家一起/tmplog/正常理赔.csv',sep=',',index=False)
 
 print(r'问题理赔数量', len(wentilipei))
 print(r'问题理赔的赔付金额总数',wentilipei[[r'赔付金额']].sum()[0])
 print(r'正常理赔数量', len(zhengchanglipei))
 print(r'正常理赔的赔付金额总数',zhengchanglipei[[r'赔付金额']].sum()[0])
 
-tmpf = open('./tmpout/runLog.txt','w')
+tmpf = open('./两家一起/tmplog/runLog.txt','w')
 tmpf.write(r'问题理赔的赔付金额总数:'+str(wentilipei[[r'赔付金额']].sum()[0]) + '\n');
 tmpf.write(r'问题理赔数量:'+str(len(wentilipei))+ '\n')
 tmpf.write(r'正常理赔的赔付金额总数:'+str(zhengchanglipei[[r'赔付金额']].sum()[0]) + '\n');
 tmpf.write(r'正常理赔数量:'+str(len(zhengchanglipei))+ '\n')
-
-
-##baodan_groupd = baodan.groupby(r'保单ID')
-##baodan_groupd.count().to_csv(r'baodan分组.csv',encoding='utf-8-sig',mode='w+')
 
 baodan_che = baodan[[r'保单ID',r'理赔ID',r'车架号']]
 juese_baodan = juese[[r'保单ID',r'车主证件号',r'投保人证件号',r'被保险人证件号']]
@@ -91,15 +85,7 @@ chezhu_che = juese_che[[r'车架号',r'车主证件号']]
 toubao_che = juese_che[[r'车架号',r'投保人证件号']]
 beibao_che = juese_che[[r'车架号',r'被保险人证件号']]
 
-lipei_shangzhe = shangzheinfo[[r'理赔id',r'伤者证件号']]
-
-
-##lipei = pd.read_csv(outdir+'/lipei.csv',encoding='utf8',dtype={0:np.object},nrows=100)
-##lipei = lipei[['理赔ID','出险驾驶员证件号码','车架号']]
-
-
-
-##jiashi_che = chesun[['出险驾驶员证件号码','车架号']].drop_duplicates()
+lipei_shangzhe = shangzhe[[r'理赔ID',r'伤者证件号']]
 
 shigu_che = chesun[[r'理赔ID',r'车架号']]
 
@@ -132,46 +118,73 @@ che_toubao = juese_che[['车架号','投保人证件号']].drop_duplicates().ren
 che_beibao = juese_che[['车架号','被保险人证件号']].drop_duplicates().rename(columns={'被保险人证件号':'Target','车架号':'Source'})
 che_jiashiyuan = chesun[['车架号','出险驾驶员证件号码']].drop_duplicates().dropna().rename(columns={'出险驾驶员证件号码':'Target','车架号':'Source'})
 che_lipei=chesun[['车架号','理赔ID']].drop_duplicates().rename(columns={'理赔ID':'Target','车架号':'Source'})
-lipei_shangzhe = lipei_shangzhe.rename(columns={r'理赔id':'Target',r'伤者证件号':'Source'})
+lipei_shangzhe = lipei_shangzhe.rename(columns={r'理赔ID':'Target',r'伤者证件号':'Source'})
 
-edges = pd.concat([che_chezhu,che_toubao,che_jiashiyuan,che_beibao,che_lipei,lipei_shangzhe]).drop_duplicates()
-edges.to_csv('./'+outdir+'/edges/source_target.csv',sep=',',index=False)
+##加载中保信
+indir=r'./两家一起/摘取出数据/中保信'
+zbxlipeibaodan = pd.read_csv(indir+'/lipeibaodan.csv',encoding='utf8',dtype={0:np.dtype(str)})
+zbxchesun = pd.read_csv(indir + '/chesun.csv',encoding='utf8',dtype={0:np.dtype(str)})
+zbxche = zbxlipeibaodan[r'车架号'].drop_duplicates()
+
+zbxchezhu=zbxlipeibaodan[r'车主'].drop_duplicates()
+zbxchezhu.dropna(inplace=True)
+zbxtoubaoren=zbxlipeibaodan[r'投保人'].drop_duplicates()
+zbxtoubaoren.dropna(inplace=True)
+zbxjiashiyuan=zbxlipeibaodan[r'出险驾驶员证件号码'].drop_duplicates()
+zbxlipei=zbxlipeibaodan['Claim ID'].drop_duplicates()
+zbxbeibaoren=zbxlipeibaodan[r'被保人'].drop_duplicates()
+zbxbeibaoren.dropna(inplace=True)
+
+zbxsunshiche = zbxchesun[r'车架号'].drop_duplicates()
+zbxsunshichejiashiyuan = zbxchesun[r'损失车辆驾驶员'].drop_duplicates()
+zbxsunshilipei= zbxchesun['Claim ID'].drop_duplicates()
+zbxlipei=zbxsunshilipei.append(zbxlipei).drop_duplicates()
+
+
+zbxche.to_csv(outdir+'/nodes/zbxche.csv',sep=',',index=False)
+zbxchezhu.to_csv(outdir+'/nodes/zbxchezhu.csv',sep=',',index=False)
+zbxtoubaoren.to_csv(outdir+'/nodes/zbxtoubaoren.csv',sep=',',index=False)
+zbxjiashiyuan.to_csv(outdir+'/nodes/zbxjiashiyuan.csv',sep=',',index=False)
+zbxlipei.to_csv(outdir+'/nodes/zbxlipei.csv',sep=',',index=False)
+zbxsunshiche.to_csv(outdir+'/nodes/zbxsunshiche.csv',sep=',',index=False)
+zbxsunshichejiashiyuan.to_csv(outdir+'/nodes/zbxsunshichejiashiyuan.csv',sep=',',index=False)
+zbxbeibaoren.to_csv(outdir+'/nodes/zbxbeibaoren.csv',sep=',' ,index=False)
+zbxche = zbxche.tolist()
+zbxchezhu=zbxchezhu.tolist()
+zbxsunshiche = zbxsunshiche.tolist()
+zbxtoubaoren=zbxtoubaoren.tolist()
+zbxjiashiyuan=zbxjiashiyuan.tolist()
+zbxlipei=zbxlipei.tolist()
+zbxbeibaoren=zbxbeibaoren.tolist()
+zbxsunshichejiashiyuan=zbxsunshichejiashiyuan.tolist()
+zbxche_chezhu = zbxlipeibaodan[[r'车架号',r'车主']].drop_duplicates().rename(columns={r'车主':'Target',r'车架号':'Source'})
+zbxche_toubao = zbxlipeibaodan[[r'车架号',r'投保人']].drop_duplicates().rename(columns={r'投保人':'Target',r'车架号':'Source'})
+zbxche_chezhu.dropna(subset=['Target','Source'],inplace=True)
+zbxche_toubao.dropna(subset=['Target','Source'],inplace=True)
+zbxche_beibaoren = zbxlipeibaodan[[r'车架号',r'被保人']].drop_duplicates().rename(columns={r'被保人':'Target',r'车架号':'Source'})
+zbxche_beibaoren.dropna(subset=['Target','Source'],inplace=True)
+zbxjiashiyuan_lipei = zbxlipeibaodan[[r'出险驾驶员证件号码','Claim ID']].drop_duplicates().rename(columns={r'出险驾驶员证件号码':'Target','Claim ID':'Source'})
+
+zbxche_lipei=zbxlipeibaodan[[r'车架号','Claim ID']].drop_duplicates().rename(columns={'Claim ID':'Source',r'车架号':'Target'})
+zbxsunshiche_lipei=zbxchesun[[r'车架号','Claim ID']].drop_duplicates().rename(columns={'Claim ID':'Source',r'车架号':'Target'})
+zbxsunshichejiashiyuan_lipei=zbxchesun[[r'损失车辆驾驶员','Claim ID']].drop_duplicates().rename(columns={'Claim ID':'Source',r'损失车辆驾驶员':'Target'})
+
+edges = pd.concat([
+                   che_chezhu,che_toubao,che_jiashiyuan,che_beibao,che_lipei,lipei_shangzhe,
+                   zbxche_chezhu,zbxche_toubao,zbxche_beibaoren,zbxche_lipei,
+                   #zbxjiashiyuan_lipei,
+                   zbxsunshiche_lipei,
+                   #zbxsunshichejiashiyuan_lipei
+                   ]
+                  ).drop_duplicates()
+edges.to_csv(outdir+'/edges.csv',sep=',',index=False)
+
 time_start = time.time()
 G=nx.from_pandas_edgelist(edges,'Source','Target')
 time_end = time.time()
 
-print('Fill Graph Finished Use Time:',time_end-time_start,'s')
-tmpf.write('Fill Graph Finished Use Time:'+str(time_end-time_start)+'s\n')
 
-print('Claim Count:' , len(lipei))
-tmpf.write('Claim Count:' + str(len(lipei)) + '\n')
-
-print('Car Count:' , len(che))
-tmpf.write('Car Count:' + str(len(che))+ '\n')
-
-print('Car Owner:',len(chezhu))
-tmpf.write('Car Owner:'+str(len(chezhu))+'\n')
-
-print('Toubaoren Count:',len(toubao))
-tmpf.write('Toubaoren Count:'+str(len(toubao))+'\n')
-
-print('Beibaoren Count:', len(beibao))
-tmpf.write('Beibaoren Count:'+ str(len(beibao)) +'\n')
-
-print(r'驾驶员数量:',len(jiashiyuan))
-tmpf.write(r'驾驶员数量:'+ str(len(jiashiyuan))+ '\n')
-
-print(r'伤者数量:',len(shangzhe))
-tmpf.write(r'伤者数量:'+ str(len(shangzhe))+ '\n')
-
-print(r'边数:',len(edges))
-tmpf.write('边数:'+str(len(edges))+ '\n')
-
-print('节点数:', len(G.nodes()))
-tmpf.write('节点数:'+str(len(G.nodes()))+ '\n')
-
-
-time_start = time.time()
+#图中华安
 for n in G.nodes():
     node=G.nodes[n]
     node['fenlei']=set()
@@ -182,6 +195,77 @@ for n in G.nodes():
     node['che']=set()
     node['beibao']=set()
     node['shangzhe']=set()
+    node['sunshiche']=set()
+    node['laiyuan']=r'华安'
+
+for idx,ccz in zbxche_chezhu.iterrows():
+    c=G.nodes[ccz['Source']]
+    c['laiyuan']=r'中保信'
+    cz=G.nodes[ccz['Target']]
+    cz['laiyuan']=r'中保信'
+    c['fenlei'].add('che')
+    c['chezhu']=ccz['Target']
+    cz['fenlei'].add('chezhu')
+    cz['che'].add(ccz['Source'])
+
+for idx,ct in zbxche_toubao.iterrows():
+    c=G.nodes[ct['Source']]
+    c['laiyuan']=r'中保信'
+    c['fenlei'].add('che')
+    c['toubao']=ct['Target']
+    t=G.nodes[ct['Target']]
+    t['laiyuan']=r'中保信'
+    t['fenlei'].add('toubao')
+    t['che'].add(ct['Source'])
+
+for idx,cb in zbxche_beibaoren.iterrows():
+    c=G.nodes[cb['Source']]
+    c['laiyuan']=r'中保信'
+    bbr=G.nodes[cb['Target']]
+    c['fenlei'].add('che')
+    c['beibao']=cb['Target']
+    bbr['fenlei'].add('beibao')
+    bbr['che'].add(cb['Source'])
+
+for idx,cl in zbxche_lipei.iterrows():
+    l=G.nodes[cl['Source']]
+    l['laiyuan']=r'中保信'
+    c=G.nodes[cl['Target']]
+    c['laiyuan']=r'中保信'
+    c['fenlei'].add('che')
+    c['lipei'].add(cl['Source'])
+    l['fenlei'].add('lipei')
+    l['che'].add(cl['Target'])
+
+for idx,sl in zbxsunshiche_lipei.iterrows():
+    l=G.nodes[sl['Source']]
+    l['laiyuan']=r'中保信'
+    s=G.nodes[sl['Target']]
+    s['laiyuan']=r'中保信'
+    s['fenlei'].add('sunshiche')
+    s['lipei'].add(sl['Source'])
+    l['fenlei'].add('lipei')
+    l['sunshiche'].add(sl['Target'])
+
+#for idx,jl in zbxjiashiyuan_lipei.iterrows():
+#    l=G.nodes[jl['Source']]
+#    l['laiyuan']=r'中保信'
+#    l['fenlei'].add('lipei')
+#    l['jiashiyuan'].add(jl['Target'])
+#    j=G.nodes[jl['Target']]
+#    j['laiyuan']=r'中保信'
+#    j['fenlei'].add('jiashiyuan')
+#    j['lipei'].add(jl['Source'])
+
+#for idx,sjl in zbxsunshichejiashiyuan_lipei.iterrows():
+#    l=G.nodes[sjl['Source']]
+#    l['laiyuan']=r'中保信'
+#    l['fenlei'].add('lipei')
+#    l['jiashiyuan'].add(sjl['Target'])
+#    j=G.nodes[sjl['Target']]
+#    j['laiyuan']=r'中保信'
+#    j['fenlei'].add('jiashiyuan')
+#    j['lipei'].add(sjl['Source'])
     
 for idx,ccz in che_chezhu.iterrows():
     c=G.nodes[ccz['Source']]
@@ -231,47 +315,18 @@ for idx,sz in lipei_shangzhe.iterrows():
     l['fenlei'].add('lipei')
     l['shangzhe'].add(sz['Source'])
 
-time_end = time.time()
-print('Fill Porperties Time:',time_end - time_start,'s')
-tmpf.write('Fill Porperties Time:'+str(time_end - time_start)+'s' +  '\n')
-time_start = time.time()
 partition = community.best_partition(G)
-time_end = time.time()
-print('Find Partition Time:',time_end-time_start)
-tmpf.write('Find Partition Time:'+str(time_end-time_start) +  '\n')
-
 parsize = len(set(partition.values()))
-print('Community Count:',parsize)
-tmpf.write('Community Count:'+str(parsize) + '\n')
-tmpf.close()
-
-edge_list = edges.values.tolist()
 procidx = 0
-
-loop_file = codecs.open('./'+outdir+'/loop.csv','w+','utf-8')
-loop_writer = csv.writer(loop_file,delimiter=',',quotechar=' ',quoting=csv.QUOTE_MINIMAL)
-loop_writer.writerow([r'编号', r'节点数',r'理赔数',r'理赔总金额',r'零结数量',r'坏环'])
-loop_file.flush()
 for com in set(partition.values()):
     
     com_nodes = [ nodes for nodes in partition.keys() if partition[nodes] == com]
     node_count = len(com_nodes)
-    
     print('proc : ',procidx , '/',parsize,' node_count:',node_count,' id:',com)
     procidx = procidx+1
-    
-    if node_count < 4 :
-        print('\ttoo small passed')
-        continue
-    if node_count > 100:
-        print('\t too large passed')
-        continue
-    
     dir_name = './'+outdir+'/partitions/' + str(node_count)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-
-    time_start = time.time()
     local_ches = []
     local_chezhus =[]
     local_jiashiyuans = []
@@ -299,20 +354,12 @@ for com in set(partition.values()):
     beibao_writer = csv.writer(beibao_file,delimiter=' ',quotechar=' ',quoting=csv.QUOTE_MINIMAL)
     shangzhe_file = codecs.open(com_dirname + '/shangzhe.csv','w+','utf-8')
     shangzhe_writer = csv.writer(shangzhe_file,delimiter=' ',quotechar=' ',quoting=csv.QUOTE_MINIMAL)
-    
-    time_end = time.time()
-    print('\tPrepare Node Files Time:',time_end-time_start)
-    time_start = time.time()
-        
+
     lG=nx.Graph()
-    lS=nx.Graph()
     for com_node in com_nodes:
         
         node = G.nodes[com_node]
         lG.add_node(com_node)
-
-        if 'lipei' not in node['fenlei']:
-            lS.add_node(com_node)
         
         for fenlei in iter(node['fenlei']):
             if fenlei == 'sunshiche':
@@ -320,26 +367,18 @@ for com in set(partition.values()):
                 if node['chezhu']:
                     lG.add_node(node['chezhu'])
                     lG.add_edge(com_node,node['chezhu'])
-                    lS.add_node(node['chezhu'])
-                    lS.add_edge(com_node,node['chezhu'])
 
                 if node['toubao']:
                     lG.add_node(node['toubao'])
                     lG.add_edge(com_node,node['toubao'])
-                    lS.add_node(node['toubao'])
-                    lS.add_edge(com_node,node['toubao'])
 
                 if len(node['jiashiyuan'])>0:
                     lG.add_nodes_from(list(node['jiashiyuan']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiyuan'])])
-                    lS.add_nodes_from(list(node['jiashiyuan']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiyuan'])])
 
                 if len(node['beibao'])>0:
                     lG.add_node(node['beibao'])
                     lG.add_edge(com_node,node['beibao'])
-                    lS.add_node(node['beibao'])
-                    lS.add_edge(com_node,node['beibao'])
 
                 if len(node['lipei'])>0:
                     lG.add_nodes_from(list(node['lipei']))
@@ -349,26 +388,39 @@ for com in set(partition.values()):
                 if node['chezhu']:
                     lG.add_node(node['chezhu'])
                     lG.add_edge(com_node,node['chezhu'])
-                    lS.add_node(node['chezhu'])
-                    lS.add_edge(com_node,node['chezhu'])
 
                 if node['toubao']:
                     lG.add_node(node['toubao'])
                     lG.add_edge(com_node,node['toubao'])
-                    lS.add_node(node['toubao'])
-                    lS.add_edge(com_node,node['toubao'])
 
                 if len(node['beibao'])>0:
                     lG.add_node(node['beibao'])
                     lG.add_edge(com_node,node['beibao'])
-                    lS.add_node(node['beibao'])
-                    lS.add_edge(com_node,node['beibao'])
 
                 if len(node['jiashiyuan'])>0:
                     lG.add_nodes_from(list(node['jiashiyuan']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiyuan'])])
-                    lS.add_nodes_from(list(node['jiashiyuan']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiyuan'])])
+
+                if len(node['lipei'])>0:
+                    lG.add_nodes_from(list(node['lipei']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['lipei'])])
+            if fenlei == 'sunshiche':
+                sunshiche_writer.writerow([com_node])
+                if node['chezhu']:
+                    lG.add_node(node['chezhu'])
+                    lG.add_edge(com_node,node['chezhu'])
+
+                if node['toubao']:
+                    lG.add_node(node['toubao'])
+                    lG.add_edge(com_node,node['toubao'])
+
+                if node['beibao']:
+                    lG.add_node(node['beibao'])
+                    lG.add_edge(com_node,node['beibao'])
+
+                if len(node['jiashiyuan'])>0:
+                    lG.add_nodes_from(list(node['jiashiyuan']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiyuan'])])
 
                 if len(node['lipei'])>0:
                     lG.add_nodes_from(list(node['lipei']))
@@ -378,45 +430,43 @@ for com in set(partition.values()):
                 if len(node['che'])>0:
                     lG.add_nodes_from(list(node['che']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
-                    lS.add_nodes_from(list(node['che']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
 
             elif fenlei=='jiashiyuan':
                 jiashiyuan_writer.writerow([com_node])
+                if len(node['lipei'])>0:
+                    lG.add_nodes_from(list(node['lipei']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['lipei'])])
                 if len(node['che'])>0:
                     lG.add_nodes_from(list(node['che']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
-                    lS.add_nodes_from(list(node['che']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
+                    
             elif fenlei=='beibao':
                 beibao_writer.writerow([com_node])
                 if len(node['che'])>0:
                     lG.add_nodes_from(list(node['che']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
-                    lS.add_nodes_from(list(node['che']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
                     
             elif fenlei == 'chezhu' :
                 chezhu_writer.writerow([com_node])
                 if len(node['che'])>0:
                     lG.add_nodes_from(list(node['che']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
-                    lS.add_nodes_from(list(node['che']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
+                    
             elif fenlei == 'shangzhe' :
                 shangzhe_writer.writerow([com_node])
-                local_shangzhes.append(com_node)
                 if len(node['lipei'])>0:
                     lG.add_nodes_from(list(node['lipei']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['lipei'])])
-                    lS.add_nodes_from(list(node['lipei']))
-                    lS.add_edges_from([(com_node,other_node) for other_node in iter(node['lipei'])])
+                    
             elif fenlei == 'lipei':
                 lipei_writer.writerow([com_node])
                 local_lipeis.append(com_node)
                 if len(node['che'])>0:
                     lG.add_nodes_from(list(node['che']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
+                if len(node['sunshiche'])>0:
+                    lG.add_nodes_from(list(node['sunshiche']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['sunshiche'])])
                 if len(node['shangzhe'])>0:
                     lG.add_nodes_from(list(node['shangzhe']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['shangzhe'])])
@@ -426,11 +476,14 @@ for com in set(partition.values()):
     for lnode in lG.nodes():
         n = G.nodes[lnode]
         if 'che' in n['fenlei'] :
-            Gnode_color.append('blue')
+            if n['laiyuan']==r'中保信':
+                Gnode_color.append('darkblue')
+            else:
+                Gnode_color.append('blue')
         elif 'shangzhe' in n['fenlei']:
-            Gnode_color.append('black')
+            Gnode_color.append('brown')
         elif 'chezhu' in n['fenlei'] :
-            Gnode_color.append('green')
+            Gnode_color.append('orange')
         elif 'jiashiyuan' in n['fenlei'] :
             Gnode_color.append('yellow')
         elif 'toubao' in n['fenlei'] :
@@ -438,143 +491,75 @@ for com in set(partition.values()):
         elif 'beibao' in n['fenlei']:
             Gnode_color.append('purple')
         elif 'lipei' in n['fenlei'] :
-            Gnode_color.append('cyan')
+            if n['laiyuan']==r'中保信':
+                Gnode_color.append('seagreen')
+            else:
+                Gnode_color.append('green')
+        elif 'sunshiche' in n['fenlei']:
+            Gnode_color.append('black')
         else:
-            Gnode_color.append('grey')
+            print('not support fenlei:',n['fenlei'])
+            Gnode_color.append('gray')
 
-    Snode_color = []
-    for lnode in lS.nodes():
-        n = G.nodes[lnode]
-        if 'che' in n['fenlei'] :
-            Snode_color.append('blue')
-        elif 'shangzhe' in n['fenlei']:
-            Snode_color.append('black')
-        elif 'chezhu' in n['fenlei'] :
-            Snode_color.append('green')
-        elif 'jiashiyuan' in n['fenlei'] :
-            Snode_color.append('yellow')
-        elif 'toubao' in n['fenlei'] :
-            Snode_color.append('red')
-        elif 'beibao' in n['fenlei']:
-            Snode_color.append('purple')
-        elif 'lipei' in n['fenlei'] :
-            Snode_color.append('cyan')
-        else:
-            Snode_color.append('grey')
+    
     for egs in lG.edges():
         edge_writer.writerow(list(egs))
 
-    hasLoop = False
-    needDrop = False
-    hasOtherCycle = False 
-    try:
-        #f1 = nx.algorithms.find_cycle(lG)
-        f1 = nx.algorithms.cycle_basis(lG)
-        if f1:
-            hasLoop = True
-            for items in f1:
-                #items=set()
-                
-                #for edge in f1:
-                #    ##print(type(edge))
-                #    ##print(type(edge[0]))
-                #    items.add(edge[0])
-                #    items.add(edge[1])
-                #print(items)
-                #print('numitems', len(items))
-                if(len(items)==4):
-                    carcount=0
-                    personcount=0
-                    for item in items:
-                        n = G.nodes[item]
-                        if 'che' in n['fenlei'] :
-                            carcount+=1
-                        elif 'jiashiyuan' in n['fenlei']:
-                            personcount+=1
-                        elif 'toubao' in n['fenlei']:
-                            personcount+=1
-                        elif 'beibao' in n['fenlei']:
-                            personcount+=1
-                        elif 'chezhu' in n['fenlei']:
-                            personcount+=1
-                    print('carcount', carcount,'personcount',personcount)
-                    if (carcount == 2 and personcount == 2):
-                        if(not hasOtherCycle):
-                            needDrop = True
-                    else:
-                        hasOtherCycle = True
-                        needDrop = False
-                else:
-                    hasOtherCycle = True
-                    needDrop = False
-    except:
-        pass
-    print("hasLoop",hasLoop,"needDrop",needDrop,"hasOtherCycle",hasOtherCycle)
-    nx.draw_spring(lG,node_color=Gnode_color,with_labels=True)
-    ##plt.show()
-    plt.savefig(com_dirname + '/figure.png')
-    if hasLoop:
-        if needDrop:
-            plt.savefig('./'+badloopdir+'/' + str(node_count) + '_' + str(com) + '.png')
-        else:
-            plt.savefig('./'+loopdir+'/' + str(node_count) + '_' + str(com) + '.png')
-    plt.clf()
-    nx.draw_spring(lG,node_color=Gnode_color)
-    plt.savefig(com_dirname + '/figure_nolabel.png')
-    if hasLoop:
-        if needDrop:
-            plt.savefig('./'+badloopdir+'/' + str(node_count) + '_' + str(com) + 'nolabel.png')
-        else:
-            plt.savefig('./'+loopdir+'/' + str(node_count) + '_' + str(com) + 'nolabel.png')
-    plt.clf()
-
-    nx.draw_spring(lS,node_color=Snode_color,with_labels=True)
-    ##plt.show()
-    plt.savefig(com_dirname + '/nolipei_figure.png')
-    plt.clf()
-    nx.draw_spring(lS,node_color=Snode_color)
-    plt.savefig(com_dirname + '/nolipei_figure_nolabel.png')
-    plt.clf()
     lipeinodes='|'.join(local_lipeis)
     locallipeiinfo = lipeiinfo[(lipeiinfo[r'理赔ID'].str.contains(lipeinodes))]
-    locallipeiinfo.to_csv(com_dirname + r'/理赔信息表.csv',sep=',',index=False)
+    locallipeiinfo.to_csv(com_dirname + r'/华安理赔信息表.csv',sep=',',index=False)
 
     localbaodanxinxi = baodan[(baodan[r'理赔ID'].str.contains(lipeinodes))]
-    
+
     if len(localbaodanxinxi) > 0:
         
-        localbaodanxinxi.to_csv(com_dirname + r'/保单信息表.csv', sep = ',', index=False)
+        localbaodanxinxi.to_csv(com_dirname + r'/华安保单信息表.csv', sep = ',', index=False)
         localbaodanids = localbaodanxinxi[[r'保单ID']].drop_duplicates()[r'保单ID'].tolist()
         localbandanidsstr = '|'.join(localbaodanids)
     
         localjueseinfo = juese[(juese[r'保单ID'].str.contains(localbandanidsstr))]
-        localjueseinfo.to_csv(com_dirname + r'/保单角色信息表.csv',sep=',',index=False)
-
-        localbaodanhebin = pd.merge(localbaodanxinxi,localjueseinfo,on=r'保单ID',how='inner')
-        localbaodanhebin.to_csv(com_dirname + r'/保单信息合并表.csv',sep=',',index=False)
-    if len(local_shangzhes) > 0:
-        shangzhenodes='|'.join(local_shangzhes)
-        localrenshang = shangzheinfo[(shangzheinfo[r'理赔id'].str.contains(lipeinodes))]
-        localrenshang.to_csv(com_dirname + r'/人伤信息.csv',sep=',',index=False)
+        localjueseinfo.to_csv(com_dirname + r'/华安保单角色信息表.csv',sep=',',index=False)
 
     localchesuninfo = chesun[(chesun[r'理赔ID'].str.contains(lipeinodes))]
-    localchesuninfo.to_csv(com_dirname + r'/车损信息.csv',sep=',',index=False)
+    localchesuninfo.to_csv(com_dirname + r'/华安车损信息.csv',sep=',',index=False)
 
     localpeifu = peifuinfo[(peifuinfo[r'理赔ID'].str.contains(lipeinodes))]
-    localpeifu.to_csv(com_dirname + r'/赔付信息表.csv',sep=',',index=False)
+    localpeifu.to_csv(com_dirname + r'/华安赔付信息表.csv',sep=',',index=False)
+
+    localzbxlipeibaodan = zbxlipeibaodan[(zbxlipeibaodan[r'Claim ID'].str.contains(lipeinodes))]
+    localzbxlipeibaodan.to_csv(com_dirname + r'/中保信理赔保单信息.csv',sep=',',index=False)
+    
+    
+    localzbxchesun = zbxchesun[(zbxchesun[r'Claim ID'].str.contains(lipeinodes))]
+    localzbxchesun.to_csv(com_dirname + r'/中保信车损.csv',sep=',',index=False)
+    
+    hasLoop = False
+    try:
+        f1 = nx.algorithms.cycle_basis(lG)
+        if f1:
+            hasLoop = True
+    except Exception as e:
+        print("！！！！！！！！！！！Get Except ",e)
+        pass
 
     
-    ## id, node_count,lipei_count,lipeijin_e,linjiecount
-    linjiecount = len(locallipeiinfo[(locallipeiinfo[r'案件状态']==r'零结')])
-    #print(com,node_count,len(local_lipeis),locallipeiinfo[[r'赔付金额']].sum()[0],linjiecount)
+    print("hasLoop",hasLoop)
+    nx.draw_spring(lG,node_color=Gnode_color,with_labels=True,node_size=128)
+    
+    plt.savefig(com_dirname + '/figure.png')
     if hasLoop:
-        if needDrop:
-            loop_writer.writerow([com,node_count,len(local_lipeis),locallipeiinfo[[r'赔付金额']].sum()[0],linjiecount,1])
-        else:
-            loop_writer.writerow([com,node_count,len(local_lipeis),locallipeiinfo[[r'赔付金额']].sum()[0],linjiecount,0])
-        loop_file.flush()
-    #loop_file.close()
+        plt.savefig('./'+loopdir+'/' + str(node_count) + '_' + str(com) + '.png')
+    
+    plt.clf()
+    nx.draw_spring(lG,node_color=Gnode_color,node_size=182)
+    plt.savefig(com_dirname + '/figure_nolabel.png')
 
-loop_file.close()
+    if hasLoop:
+        plt.savefig('./'+loopdir+'/' + str(node_count) + '_' + str(com) + 'no_label.png')
     
-    
+    plt.clf()
+            
+plt.clf()
+
+#nx.draw_spring(G,with_labels=False,node_shape='v')
+#plt.show()
