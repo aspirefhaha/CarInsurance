@@ -14,6 +14,7 @@ import os
 import csv
 import codecs
 
+# 建立保存文件的目录结构
 print(os.getcwd())
 outdir='fraud_data0602'
 loopdir=outdir + '/loops'
@@ -47,7 +48,8 @@ if not isExists:
 isExists = os.path.exists('./tmpout')
 if not isExists:
     os.makedirs('./tmpout')
-    
+
+# 由于数据量比较大，在测试过程中，可以设置samplenum为一个较小的数，进行代码调试，如果是0的话，会把数据全部读取到内存中    
 samplenum=0
 
 if samplenum != 0:
@@ -60,7 +62,8 @@ else:
     baodan = pd.read_csv(outdir+r'/baodanxinxi.csv',encoding='utf8',dtype={0:np.object,1:np.object})
     chesun = pd.read_csv(outdir+r'/chesun.csv',encoding='utf8',dtype={0:np.object,3:np.object,5:np.object,8:np.object})
     shangzhe = pd.read_csv(outdir + r'/shangzhe.csv',encoding='utf8',dtype={0:np.object})
-    
+
+# 根据要求，去除不合理的数据    
 lipeiinfo = pd.read_csv(outdir+'/lipei.csv',encoding='utf8',dtype={0:np.object,6:np.object,7:np.object,12:np.object,14:np.object,15:np.object})
 peifuinfo = pd.read_csv(outdir+'/peifu.csv',encoding='utf8',dtype={0:np.object})
 
@@ -69,8 +72,6 @@ wentilipei.to_csv('./tmpout/wentilipei.csv',sep=',',index=False)
 
 zhengchanglipei = lipeiinfo[(lipeiinfo[r'案件状态']==r'正常')]
 zhengchanglipei.to_csv('./tmpout/zhengchanglipei.csv',sep=',',index=False)
-
-
 
 print(r'问题理赔数量', len(wentilipei))
 print(r'问题理赔的赔付金额总数',wentilipei[[r'赔付金额']].sum()[0])
@@ -83,7 +84,7 @@ tmpf.write(r'问题理赔数量:'+str(len(wentilipei))+ '\n')
 tmpf.write(r'正常理赔的赔付金额总数:'+str(zhengchanglipei[[r'赔付金额']].sum()[0]) + '\n');
 tmpf.write(r'正常理赔数量:'+str(len(zhengchanglipei))+ '\n')
 
-
+#从清洗好的数据中，摘取图数据中的节点和关联关系的数据，以边的方式建图
 ##baodan_groupd = baodan.groupby(r'保单ID')
 ##baodan_groupd.count().to_csv(r'baodan分组.csv',encoding='utf-8-sig',mode='w+')
 
@@ -98,11 +99,8 @@ beibao_che = juese_che[[r'车架号',r'被保险人证件号']]
 
 lipei_shangzhe = shangzhe[[r'理赔id',r'伤者证件号']]
 
-
 ##lipei = pd.read_csv(outdir+'/lipei.csv',encoding='utf8',dtype={0:np.object},nrows=100)
 ##lipei = lipei[['理赔ID','出险驾驶员证件号码','车架号']]
-
-
 
 ##jiashi_che = chesun[['出险驾驶员证件号码','车架号']].drop_duplicates()
 
@@ -131,7 +129,7 @@ jiashiyuan=jiashiyuan.tolist()
 lipei=lipei.tolist()
 beibao=beibao.tolist()
 shangzhe=shangzhe.tolist()
-
+# 挑选出所有的边
 che_chezhu = juese_che[['车架号','车主证件号']].drop_duplicates().rename(columns={'车主证件号':'Target','车架号':'Source'})
 che_toubao = juese_che[['车架号','投保人证件号']].drop_duplicates().rename(columns={'投保人证件号':'Target','车架号':'Source'})
 che_beibao = juese_che[['车架号','被保险人证件号']].drop_duplicates().rename(columns={'被保险人证件号':'Target','车架号':'Source'})
@@ -141,6 +139,8 @@ lipei_shangzhe = lipei_shangzhe.rename(columns={r'理赔id':'Target',r'伤者证
 
 edges = pd.concat([che_chezhu,che_toubao,che_jiashiyuan,che_beibao,che_lipei,lipei_shangzhe]).drop_duplicates()
 edges.to_csv('./'+outdir+'/edges/source_target.csv',sep=',',index=False)
+
+# 开始建立整体大图
 time_start = time.time()
 G=nx.from_pandas_edgelist(edges,'Source','Target')
 time_end = time.time()
@@ -238,6 +238,7 @@ for idx,sz in lipei_shangzhe.iterrows():
 time_end = time.time()
 print('Fill Porperties Time:',time_end - time_start,'s')
 tmpf.write('Fill Porperties Time:'+str(time_end - time_start)+'s' +  '\n')
+
 time_start = time.time()
 partition = community.best_partition(G)
 time_end = time.time()
