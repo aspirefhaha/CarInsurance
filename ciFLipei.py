@@ -84,7 +84,7 @@ lipeidata.to_csv(outdir + r'理赔信息_未删除定损员.csv',index=False)
 
 
 sort_lipei = lipeidata.sort_values(by=r'报案ID')
-sort_lipei.to_csv(outdir + r'理赔信息分组_未删除定损员.csv',index=None)
+sort_lipei.to_csv(outdir + r'理赔信息分组_未删除定损员.csv',index=False)
 
 del lipeidata[r'定损员姓名']
 del lipeidata[r'定损员代码']
@@ -95,7 +95,7 @@ lipeidata.to_csv(outdir + r'理赔信息.csv',index=False)
 
 
 sort_lipei = lipeidata.sort_values(by=r'报案ID')
-sort_lipei.to_csv(outdir + r'理赔信息分组.csv',index=None)
+sort_lipei.to_csv(outdir + r'理赔信息分组.csv',index=False)
 
 #gp_lipei = pd.DataFrame(lipeidata.groupby([r'报案ID',r'立案ID',r'保单ID',r'险种',r'赔付金额',r'赔款收款身份证',r'赔付支付账户名',r'赔款支付账号',r'理赔编码']))
 #gp_lipei.to_excel(outdir + r'理赔信息分组.xlsx', sheet_name='Sheet1')
