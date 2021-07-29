@@ -44,7 +44,7 @@ chezhuwentibaodan = baodandata[(baodandata[r'车主证件号'].str.len() < 4) |
                                pd.isna(baodandata[r'车主证件号']) |
                                (baodandata[r'车主证件号'].str.match(r'(\w)(\1){3,}'))]
 
-chezhuwentibaodan.to_csv(badoutdir + r'保单信息_车主证件号码问题数据.csv')
+chezhuwentibaodan.to_csv(badoutdir + r'保单信息_车主证件号码问题数据.csv',index=False)
 print(r'车主证件号问题数据大小：',len(chezhuwentibaodan))
 for index, row in chezhuwentibaodan.iterrows():
     baodandata.loc[index,r'车主证件号'] = ''
@@ -57,10 +57,10 @@ print(r'投保人证件号问题数据大小：',len(toubaorenwentibaodan))
 for index, row in toubaorenwentibaodan.iterrows():
     baodandata.loc[index,r'投保人证件号'] = ''
 
-baodandata.to_csv(outdir + r'保单信息.csv')
+baodandata.to_csv(outdir + r'保单信息.csv',index=False)
 
 #baodandata.dropna(subset=[r'驾驶员证件号码'],inplace=True)
 #baodandata[(chesundata[r'驾驶员证件号码'].str.match(r'(\w)(\1){3,}'))]\
-#               .to_csv(badoutdir + r'车损信息_证件号码连续四个相同的.csv')
+#               .to_csv(badoutdir + r'车损信息_证件号码连续四个相同的.csv',index=False)
 #baodandata[~ (chesundata[r'驾驶员证件号码'].str.match(r'(\w)(\1){2,}'))]\
-#               .to_csv(outdir + r'车损信息.csv')
+#               .to_csv(outdir + r'车损信息.csv',index=False)

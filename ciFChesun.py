@@ -20,7 +20,7 @@ if not isExists:
 chesundata = pd.read_excel(indir + r'车损信息.xlsx',\
                            dtype={0:object,1:object,r'驾驶员证件号码':object,8:object,9:object,10:object})
 chesundata.dropna(subset=[r'驾驶员证件号码'],inplace=True)
-chesundata[(chesundata[r'驾驶员证件号码'].str.match(r'(\w)(\1){3,}'))].to_csv(badoutdir + r'车损信息_证件号码连续四个相同的.csv')
-chesundata[~ (chesundata[r'驾驶员证件号码'].str.match(r'(\w)(\1){2,}'))].to_csv(outdir + r'车损信息.csv')
+chesundata[(chesundata[r'驾驶员证件号码'].str.match(r'(\w)(\1){3,}'))].to_csv(badoutdir + r'车损信息_证件号码连续四个相同的.csv',index=False)
+chesundata[~ (chesundata[r'驾驶员证件号码'].str.match(r'(\w)(\1){2,}'))].to_csv(outdir + r'车损信息.csv',index=False)
 
 #chesundata.to_csv(outdir+r'车损信息.csv',encoding='utf-8-sig',sep=',',index=False)

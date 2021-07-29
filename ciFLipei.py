@@ -80,7 +80,7 @@ for index, row in lipeishangzhezhengjianhaowenti.iterrows():
     lipeidata.loc[index,r'伤者证件号'] = ''
 
 
-lipeidata.to_csv(outdir + r'理赔信息_未删除定损员.csv')
+lipeidata.to_csv(outdir + r'理赔信息_未删除定损员.csv',index=False)
 
 
 sort_lipei = lipeidata.sort_values(by=r'报案ID')
@@ -91,7 +91,7 @@ del lipeidata[r'定损员代码']
 lipeidata = lipeidata.drop_duplicates()
 print(r'删除定损员然后去除重复数据后大小：',len(lipeidata))
 
-lipeidata.to_csv(outdir + r'理赔信息.csv')
+lipeidata.to_csv(outdir + r'理赔信息.csv',index=False)
 
 
 sort_lipei = lipeidata.sort_values(by=r'报案ID')
