@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 
-outdir= r'./过滤后数据/'
+outdir= r'./Filtered/'
 badoutdir = r'./过滤掉数据/'
 indir = r'./'
 
