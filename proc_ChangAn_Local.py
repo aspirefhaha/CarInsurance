@@ -13,9 +13,11 @@ import os
 
 indir= r'./Filtered/'
 #spark = SparkSession.builder.getOrCreate()
+
 outdir=r'./partition'
 
 loopdir = r'./loop'
+
 isExists = os.path.exists(outdir)
 if not isExists:
     os.makedirs(outdir)
@@ -159,6 +161,7 @@ for idx,bacbc in baoan_chengbaoche_rename.iterrows():
     cbc['fenlei'].add('chengbaoche')
     cbc['baoan'].add(bacbc['Source'])
 
+
 for idx,baszc in baoan_sanzheche_rename.iterrows():
     ba = G.nodes[baszc['Source']]
     ba['fenlei'].add('baoan')
@@ -208,6 +211,7 @@ print(r'Find Partition Time:',time_end-time_start)
 parsize = len(set(partition.values()))
 print('Community Count:',parsize)
 #print(r'子群数:',parsize)
+
 procidx = 0
 for com in set(partition.values()):
     
@@ -221,26 +225,31 @@ for com in set(partition.values()):
         print('\ttoo small passed')
         continue
     if node_count > 50:
+
         print('\t too large passed')
         continue
     
     dir_name = outdir + '/' + str(node_count)
     
     com_dirname = dir_name + "/" + str(com)
+
     local_baoan = []
     local_toubaoren = []
     local_beibaoren = []
     local_chezhu = []
+
     
     
     lG=nx.Graph()
     for com_node in com_nodes:
         node = G.nodes[com_node]
         lG.add_node(com_node)
+
         
         for fenlei in iter(node['fenlei']):
             if fenlei == 'baoan':
                 local_baoan.append(com_node)
+
                 if len(node['zhanghao'])>0:
                     lG.add_nodes_from(list(node['zhanghao']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['zhanghao'])])
@@ -289,19 +298,24 @@ for com in set(partition.values()):
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['beibaoren'])])
 
             if fenlei == 'toubaoren':
+
                 local_toubaoren.append(com_node)
                 if len(node['toubaoche'])>0:
                     lG.add_nodes_from(list(node['toubaoche']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['toubaoche'])])
 
             if fenlei == 'beibaoren':
+
                 local_beibaoren.append(com_node)
+
                 if len(node['toubaoche'])>0:
                     lG.add_nodes_from(list(node['toubaoche']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['toubaoche'])])
 
             if fenlei == 'chezhu':
+
                 local_chezhu.append(com_node)
+
                 if len(node['toubaoche'])>0:
                     lG.add_nodes_from(list(node['toubaoche']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['toubaoche'])])
@@ -316,6 +330,7 @@ for com in set(partition.values()):
                     lG.add_nodes_from(list(node['jiashiren']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiren'])])
         
+
     hasLoop = False
     try:
         #f1 = nx.algorithms.find_cycle(lG)
@@ -379,3 +394,4 @@ for com in set(partition.values()):
         local_lipeidata.to_csv(com_dirname + r'/理赔信息.csv',sep=',',index=False)
         local_chesundata.to_csv(com_dirname + r'/车损信息.csv',sep=',',index=False)
         local_baodan.to_csv(com_dirname + r'/保单信息.csv',sep=',',index=False)
+
