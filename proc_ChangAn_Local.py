@@ -8,6 +8,7 @@ import community
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import scipy
 import time
 import os
 
@@ -221,7 +222,7 @@ for com in set(partition.values()):
     print('proc : ',procidx , '/',parsize,' node_count:',node_count,' id:',com)
     procidx = procidx+1
     
-    if node_count < 7 :
+    if node_count < 10 :
         print('\ttoo small passed')
         continue
     if node_count > 50:
@@ -238,8 +239,6 @@ for com in set(partition.values()):
     local_beibaoren = []
     local_chezhu = []
 
-    
-    
     lG=nx.Graph()
     for com_node in com_nodes:
         node = G.nodes[com_node]
@@ -332,15 +331,115 @@ for com in set(partition.values()):
         
 
     hasLoop = False
+    hasMultiLoop = False
     try:
         #f1 = nx.algorithms.find_cycle(lG)
         f1 = nx.algorithms.cycle_basis(lG)
         if f1:
+            if(len(f1)>1): # 大于一个环
+                hasMultiLoop = True
+            else:
+                for items in f1:
+                    if(len(items)==3):
+                        peopleCount = 0
+                        carCount = 0
+                        baoanCount = 0
+                        accountCount = 0
+                        for item in  items:
+                            n = G.nodes[item]
+                            if 'baoan' in n['fenlei'] :
+                                baoanCount+=1
+                            elif 'chengbaoche' in n['fenlei']:
+                                carCount += 1
+                            elif 'sanzheche' in n['fenlei'] :
+                                carCount += 1
+                            elif 'che' in n['fenlei'] :
+                                carCount += 1
+                            elif 'shangyuan' in n['fenlei']:
+                                peopleCount +=1
+                            elif 'jiashiren' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'chezhu' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'toubaoren' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'beibaoren' in n['fenlei']:
+                                peopleCount +=1
+                            elif 'zhanghao' in n['fenlei']:
+                                accountCount +=1
+                        if peopleCount == 1 and baoanCount == 1 and carCount == 1:
+                            hasLoop = False
+                        if accountCount == 1 and baoanCount == 1 and carCount == 1:
+                            hasLoop = False
+                    elif (len(items)==4):
+                        peopleCount = 0
+                        carCount = 0
+                        baoanCount = 0
+                        accountCount = 0
+                        for item in  items:
+                            n = G.nodes[item]
+                            if 'baoan' in n['fenlei'] :
+                                baoanCount+=1
+                            elif 'chengbaoche' in n['fenlei']:
+                                carCount += 1
+                            elif 'sanzheche' in n['fenlei'] :
+                                carCount += 1
+                            elif 'che' in n['fenlei'] :
+                                carCount += 1
+                            elif 'shangyuan' in n['fenlei']:
+                                peopleCount +=1
+                            elif 'jiashiren' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'chezhu' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'toubaoren' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'beibaoren' in n['fenlei']:
+                                peopleCount +=1
+                            elif 'zhanghao' in n['fenlei']:
+                                accountCount +=1
+                        if peopleCount == 1 and baoanCount == 2 and carCount == 1:
+                            hasLoop = False
+                        if accountCount == 1 and baoanCount == 2 and carCount == 1:
+                            hasLoop = False
+                        if baoanCount == 2 and carCount == 2:
+                            hasLoop = False
+                    elif (len(items)==5):
+                        peopleCount = 0
+                        carCount = 0
+                        baoanCount = 0
+                        accountCount = 0
+                        for item in  items:
+                            n = G.nodes[item]
+                            if 'baoan' in n['fenlei'] :
+                                baoanCount+=1
+                            elif 'chengbaoche' in n['fenlei']:
+                                carCount += 1
+                            elif 'sanzheche' in n['fenlei'] :
+                                carCount += 1
+                            elif 'che' in n['fenlei'] :
+                                carCount += 1
+                            elif 'shangyuan' in n['fenlei']:
+                                peopleCount +=1
+                            elif 'jiashiren' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'chezhu' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'toubaoren' in n['fenlei'] :
+                                peopleCount +=1
+                            elif 'beibaoren' in n['fenlei']:
+                                peopleCount +=1
+                            elif 'zhanghao' in n['fenlei']:
+                                accountCount +=1
+                        if peopleCount == 1 and baoanCount == 2 and carCount == 1 and accountCount == 1:
+                            hasLoop = False
+                        
+                
             hasLoop = True
     except Exception as e:
         print("！！！！！！！！！！！Get Except ",e)
-    #if(hasLoop):
-    if True:
+    if(hasLoop):
+    #if True:
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
         if not os.path.exists(com_dirname):
@@ -356,18 +455,20 @@ for com in set(partition.values()):
                 Gnode_color.append('green')
             elif 'che' in n['fenlei'] :
                 Gnode_color.append('yellow')
+            elif 'shangyuan' in n['fenlei']:
+                Gnode_color.append('cyan')
+            elif 'jiashiren' in n['fenlei'] :
+                Gnode_color.append('pink')
+            elif 'chezhu' in n['fenlei'] :
+                Gnode_color.append('orange')
             elif 'toubaoren' in n['fenlei'] :
                 Gnode_color.append('red')
             elif 'beibaoren' in n['fenlei']:
                 Gnode_color.append('purple')
-            elif 'chezhu' in n['fenlei'] :
-                Gnode_color.append('orange')
-            elif 'jiashiren' in n['fenlei'] :
-                Gnode_color.append('pink')
-            elif 'shangyuan' in n['fenlei']:
-                Gnode_color.append('cyan')
-            else:   # zhanghao
+            elif 'zhanghao' in n['fenlei']:
                 Gnode_color.append('gray')
+            else:   # 无关
+                Gnode_color.append('white')
         nx.draw_spring(lG,node_color=Gnode_color,with_labels=True)
         plt.savefig(com_dirname + '/figure.png')
         if(hasLoop):

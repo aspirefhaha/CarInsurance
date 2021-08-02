@@ -8,14 +8,23 @@ import pandas as pd
 import community
 import networkx as nx
 import time
+from pyspark.sql import SQLContext
 
-indir= r'./过滤后数据/'
+indir= r'hdfs://172.16.155.180:50069/user/hdfs/Filtered/'
 spark = SparkSession.builder.getOrCreate()
+sqlContext=SQLContext(sc)
+
+baodandata = ks.read_csv(indir + r'baodan.csv')
+chesundata = ks.read_csv(indir + r'chesun.csv')
+lipeidata = ks.read_csv(indir + r'lipei.csv')
 
 
-baodandata = ks.read_csv(indir + r'保单信息.csv')
-chesundata = ks.read_csv(indir + r'车损信息.csv')
-lipeidata = ks.read_csv(indir + r'理赔信息.csv')
+
+sc.broadcast(baodandata)
+sc.broadcast(chesundata)
+sc.broadcast(lipeidata)
+spark_df = sqlContext.crateDataFrame(baodandata)
+sc.broadcast(baodandata)
 
 # 报案ID-伤员
 shangyuan_baoan = lipeidata[[r'报案ID',r'伤者证件号']].rename(columns={r'伤者证件号':'Target',r'报案ID':'Source'})
