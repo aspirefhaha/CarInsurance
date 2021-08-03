@@ -583,7 +583,7 @@ for com in set(partition.values()):
                             personcount+=1
                         elif 'lipei' in n['fenlei']:
                             lipeicount += 1
-                    if (lipeicount == 1 and carcount ==1 and lipeicount == 1):
+                    if (lipeicount == 1 and carcount ==1 and peoplecount == 1):
                         if(not hasOtherCycle):
                             needDrop = True
                         

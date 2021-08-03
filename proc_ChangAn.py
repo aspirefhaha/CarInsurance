@@ -11,20 +11,25 @@ import time
 from pyspark.sql import SQLContext
 
 indir= r'hdfs://172.16.155.180:50069/user/hdfs/Filtered/'
-spark = SparkSession.builder.getOrCreate()
+#spark = SparkSession.builder.getOrCreate()
 sqlContext=SQLContext(sc)
 
 baodandata = ks.read_csv(indir + r'baodan.csv')
 chesundata = ks.read_csv(indir + r'chesun.csv')
 lipeidata = ks.read_csv(indir + r'lipei.csv')
 
+pd_baodan = baodandata.to_pandas()
+bd_baodan = sc.broadcast(pd_baodan)
+
+pd_chesun = chesundata.to_pandas()
+bd_chesun = sc.broadcast(pd_chesun)
+
+pd_lipei = lipeidata.to_pandas()
+bd_lipe = sc.broadcast(pd_lipei())
 
 
-sc.broadcast(baodandata)
-sc.broadcast(chesundata)
-sc.broadcast(lipeidata)
-spark_df = sqlContext.crateDataFrame(baodandata)
-sc.broadcast(baodandata)
+# spark_df = sqlContext.createDataFrame(baodandata)
+# sc.broadcast(baodandata)
 
 # 报案ID-伤员
 shangyuan_baoan = lipeidata[[r'报案ID',r'伤者证件号']].rename(columns={r'伤者证件号':'Target',r'报案ID':'Source'})
@@ -98,7 +103,7 @@ edges = ks.concat([shangyuan_baoan,
 time_start = time.time()
 G=nx.from_pandas_edgelist(edges.to_pandas(),r'Source',r'Target')
 time_end = time.time()
-
+print(r'Build Graph Time:',time_end-time_start)
 time_start = time.time()
 for n in G.nodes():
     node=G.nodes[n]

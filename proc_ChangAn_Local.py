@@ -336,6 +336,7 @@ for com in set(partition.values()):
         #f1 = nx.algorithms.find_cycle(lG)
         f1 = nx.algorithms.cycle_basis(lG)
         if f1:
+            hasLoop = True
             if(len(f1)>1): # 大于一个环
                 hasMultiLoop = True
             else:
@@ -348,7 +349,7 @@ for com in set(partition.values()):
                         for item in  items:
                             n = G.nodes[item]
                             if 'baoan' in n['fenlei'] :
-                                baoanCount+=1
+                                baoanCount += 1
                             elif 'chengbaoche' in n['fenlei']:
                                 carCount += 1
                             elif 'sanzheche' in n['fenlei'] :
@@ -434,10 +435,9 @@ for com in set(partition.values()):
                         if peopleCount == 1 and baoanCount == 2 and carCount == 1 and accountCount == 1:
                             hasLoop = False
                         
-                
-            hasLoop = True
     except Exception as e:
-        print("！！！！！！！！！！！Get Except ",e)
+        #print("！！！！！！！！！！！Get Except ",e)
+        hasLoop = False
     if(hasLoop):
     #if True:
         if not os.path.exists(dir_name):
@@ -469,12 +469,12 @@ for com in set(partition.values()):
                 Gnode_color.append('gray')
             else:   # 无关
                 Gnode_color.append('white')
-        nx.draw_spring(lG,node_color=Gnode_color,with_labels=True)
+        nx.draw_spring(lG,node_color=Gnode_color,with_labels=True,node_size=128,font_size=14)
         plt.savefig(com_dirname + '/figure.png')
         if(hasLoop):
             plt.savefig(loopdir+'/' + str(node_count) + '_' + str(com) + '.png')
         plt.clf()
-        nx.draw_spring(lG,node_color=Gnode_color,with_labels=False)
+        nx.draw_spring(lG,node_color=Gnode_color,with_labels=False,node_size=128,font_size=14)
         plt.savefig(com_dirname + '/figure_nolabel.png')
         if(hasLoop):
             plt.savefig(loopdir+'/' + str(node_count) + '_' + str(com) + 'nolabel.png')
@@ -484,15 +484,18 @@ for com in set(partition.values()):
         toubaorens = '|'.join(local_toubaoren)
         beibaorens = '|'.join(local_beibaoren)
         chezhus = '|'.join(local_chezhu)
-            
-        local_lipeidata = lipeidata[(lipeidata[r'报案ID'].str.contains(baoans))]
-        local_chesundata = chesundata[(chesundata[r'报案ID'].str.contains(baoans))]
-        local_baodan = baodandata[(baodandata[r'车主证件号'].str.contains(chezhus) |
+
+        if(len(local_baoan)>0):    
+            local_lipeidata = lipeidata[(lipeidata[r'报案ID'].str.contains(baoans))]
+            local_chesundata = chesundata[(chesundata[r'报案ID'].str.contains(baoans))]
+            local_lipeidata.to_csv(com_dirname + r'/理赔信息.csv',sep=',',index=False)
+            local_chesundata.to_csv(com_dirname + r'/车损信息.csv',sep=',',index=False)
+        if(len(local_chezhu) >0 or len(local_toubaoren)>0 or len(local_beibaoren)>0 ):
+            local_baodan = baodandata[(baodandata[r'车主证件号'].str.contains(chezhus) |
                                     baodandata[r'投保人证件号'].str.contains(toubaorens) |
                                     baodandata[r'被保人证件号'].str.contains(beibaorens) )]
+            local_baodan.to_csv(com_dirname + r'/保单信息.csv',sep=',',index=False)
             
             
-        local_lipeidata.to_csv(com_dirname + r'/理赔信息.csv',sep=',',index=False)
-        local_chesundata.to_csv(com_dirname + r'/车损信息.csv',sep=',',index=False)
-        local_baodan.to_csv(com_dirname + r'/保单信息.csv',sep=',',index=False)
+
 
