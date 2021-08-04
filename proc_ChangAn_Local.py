@@ -100,7 +100,7 @@ chejia_jiashiren_rename = chejia_jiashiren.rename(columns={r'驾驶员证件号�
 #chejia_jiashiren.count()
 
 # 投保车车架 (级别最低)
-toubaoche = baodandata[[r'车架号']].drop_duplicates().dropna()
+chengbaoche = baodandata[[r'车架号']].drop_duplicates().dropna()
 
 edges = ks.concat([shangyuan_baoan_rename,
                    baoan_zhanghao_rename,
@@ -128,8 +128,8 @@ for n in G.nodes():
     node['beibaoren']=set()
     node['jiashiren']=set()     # 承保车、三者车 会有 驾驶人 jiashiren 属性
     node['baoan']=set()
-    node['toubaoche']=set()     # 投保人 车主 被保人 会有 投保车 toubaoche属性
-    node['chengbaoche']=set()   # 报案 会有 承保车 chengbaoche 属性
+    node['chengbaoche']=set()     # 投保人 车主 被保人 会有 投保车 即 chengbaoche属性
+                                 # 报案 会有 承保车 chengbaoche 属性
     node['sanzheche']=set()     # 报案 会有 三者车 sanzheche 属性
     node['che']=set()           # 驾驶人 会有 车 che 属性
     
@@ -173,27 +173,27 @@ for idx,baszc in baoan_sanzheche_rename.iterrows():
 
 for idx,cjtbr in chejia_toubaoren_rename.iterrows():
     cj=G.nodes[cjtbr['Source']]
-    cj['fenlei'].add('toubaoche')
+    cj['fenlei'].add('chengbaoche')
     cj['toubaoren'].add(cjtbr['Target'])
     tbr=G.nodes[cjtbr['Target']]
     tbr['fenlei'].add('toubaoren')
-    tbr['toubaoche'].add(cjtbr['Source'])
+    tbr['chengbaoche'].add(cjtbr['Source'])
 
 for idx,cjcz in chejia_chezhu_rename.iterrows():
     cj=G.nodes[cjcz['Source']]
-    cj['fenlei'].add('toubaoche')
+    cj['fenlei'].add('chengbaoche')
     cj['chezhu'].add(cjcz['Target'])
     cz=G.nodes[cjcz['Target']]
     cz['fenlei'].add('chezhu')
-    cz['toubaoche'].add(cjcz['Source'])
+    cz['chengbaoche'].add(cjcz['Source'])
 
 for idx,cjbbr in chejia_beibaoren_rename.iterrows():
     cj = G.nodes[cjbbr['Source']]
-    cj['fenlei'].add('toubaoche')
+    cj['fenlei'].add('chengbaoche')
     cj['beibaoren'].add(cjbbr['Target'])
     bbr = G.nodes[cjbbr['Target']]
     bbr['fenlei'].add('beibaoren')
-    bbr['toubaoche'].add(cjbbr['Source'])
+    bbr['chengbaoche'].add(cjbbr['Source'])
 
 for idx,cjjsr in chejia_jiashiren_rename.iterrows():
     cj = G.nodes[cjjsr['Source']]
@@ -238,17 +238,21 @@ for com in set(partition.values()):
     local_toubaoren = []
     local_beibaoren = []
     local_chezhu = []
+    local_zhanghao = []
+    local_shangyuan = []
+    local_chengbaoche =[]
+    local_sanzheche = []
+    local_che =[]
+    local_jiashiren = []
 
     lG=nx.Graph()
     for com_node in com_nodes:
         node = G.nodes[com_node]
         lG.add_node(com_node)
 
-        
         for fenlei in iter(node['fenlei']):
             if fenlei == 'baoan':
                 local_baoan.append(com_node)
-
                 if len(node['zhanghao'])>0:
                     lG.add_nodes_from(list(node['zhanghao']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['zhanghao'])])
@@ -266,26 +270,28 @@ for com in set(partition.values()):
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['sanzheche'])])
 
             if fenlei == 'shangyuan':
+                local_shangyuan.append(com_node)
                 if len(node['baoan'])>0:
                     lG.add_nodes_from(list(node['baoan']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['baoan'])])
 
             if fenlei == 'zhanghao':
-                if len(node['baoan'])>0:
-                    lG.add_nodes_from(list(node['baoan']))
-                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['baoan'])])
-
-            if fenlei == 'chengbaoche':
+                local_zhanghao.append(com_node)
                 if len(node['baoan'])>0:
                     lG.add_nodes_from(list(node['baoan']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['baoan'])])
 
             if fenlei == 'sanzheche':
+                local_sanzheche.append(com_node)
                 if len(node['baoan'])>0:
                     lG.add_nodes_from(list(node['baoan']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['baoan'])])
 
-            if fenlei == 'toubaoche':
+            if fenlei == 'chengbaoche':
+                local_chengbaoche.append(com_node)
+                if len(node['baoan'])>0:
+                    lG.add_nodes_from(list(node['baoan']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['baoan'])])
                 if len(node['chezhu'])>0:
                     lG.add_nodes_from(list(node['chezhu']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['chezhu'])])
@@ -297,34 +303,31 @@ for com in set(partition.values()):
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['beibaoren'])])
 
             if fenlei == 'toubaoren':
-
                 local_toubaoren.append(com_node)
-                if len(node['toubaoche'])>0:
-                    lG.add_nodes_from(list(node['toubaoche']))
-                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['toubaoche'])])
+                if len(node['chengbaoche'])>0:
+                    lG.add_nodes_from(list(node['chengbaoche']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['chengbaoche'])])
 
             if fenlei == 'beibaoren':
-
                 local_beibaoren.append(com_node)
-
-                if len(node['toubaoche'])>0:
-                    lG.add_nodes_from(list(node['toubaoche']))
-                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['toubaoche'])])
+                if len(node['chengbaoche'])>0:
+                    lG.add_nodes_from(list(node['chengbaoche']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['chengbaoche'])])
 
             if fenlei == 'chezhu':
-
                 local_chezhu.append(com_node)
-
-                if len(node['toubaoche'])>0:
-                    lG.add_nodes_from(list(node['toubaoche']))
-                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['toubaoche'])])
+                if len(node['chengbaoche'])>0:
+                    lG.add_nodes_from(list(node['chengbaoche']))
+                    lG.add_edges_from([(com_node,other_node) for other_node in iter(node['chengbaoche'])])
 
             if fenlei == 'jiashiren':
+                local_jiashiren.append(com_node)
                 if len(node['che'])>0:
                     lG.add_nodes_from(list(node['che']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['che'])])
 
             if fenlei == 'che':
+                local_che.append(com_node)
                 if len(node['jiashiren'])>0:
                     lG.add_nodes_from(list(node['jiashiren']))
                     lG.add_edges_from([(com_node,other_node) for other_node in iter(node['jiashiren'])])
@@ -444,42 +447,53 @@ for com in set(partition.values()):
             os.makedirs(dir_name)
         if not os.path.exists(com_dirname):
             os.makedirs(com_dirname)
-        Gnode_color = []
-        for lnode in lG.nodes():
-            n = G.nodes[lnode]
-            if 'baoan' in n['fenlei'] :
-                Gnode_color.append('blue')
-            elif 'chengbaoche' in n['fenlei']:
-                Gnode_color.append('black')
-            elif 'sanzheche' in n['fenlei'] :
-                Gnode_color.append('green')
-            elif 'che' in n['fenlei'] :
-                Gnode_color.append('yellow')
-            elif 'shangyuan' in n['fenlei']:
-                Gnode_color.append('cyan')
-            elif 'jiashiren' in n['fenlei'] :
-                Gnode_color.append('pink')
-            elif 'chezhu' in n['fenlei'] :
-                Gnode_color.append('orange')
-            elif 'toubaoren' in n['fenlei'] :
-                Gnode_color.append('red')
-            elif 'beibaoren' in n['fenlei']:
-                Gnode_color.append('purple')
-            elif 'zhanghao' in n['fenlei']:
-                Gnode_color.append('gray')
-            else:   # 无关
-                Gnode_color.append('white')
-        nx.draw_spring(lG,node_color=Gnode_color,with_labels=True,node_size=128,font_size=14)
-        plt.savefig(com_dirname + '/figure.png')
-        if(hasLoop):
-            plt.savefig(loopdir+'/' + str(node_count) + '_' + str(com) + '.png')
-        plt.clf()
-        nx.draw_spring(lG,node_color=Gnode_color,with_labels=False,node_size=128,font_size=14)
-        plt.savefig(com_dirname + '/figure_nolabel.png')
-        if(hasLoop):
-            plt.savefig(loopdir+'/' + str(node_count) + '_' + str(com) + 'nolabel.png')
-        plt.clf()
-
+##        Gnode_color = []
+##        for lnode in lG.nodes():
+##            n = G.nodes[lnode]
+##            if 'baoan' in n['fenlei'] :
+##                Gnode_color.append('blue')
+##            elif 'chengbaoche' in n['fenlei']:
+##                Gnode_color.append('black')
+##            elif 'sanzheche' in n['fenlei'] :
+##                Gnode_color.append('green')
+##            elif 'che' in n['fenlei'] :
+##                Gnode_color.append('yellow')
+##            elif 'shangyuan' in n['fenlei']:
+##                Gnode_color.append('cyan')
+##            elif 'jiashiren' in n['fenlei'] :
+##                Gnode_color.append('pink')
+##            elif 'chezhu' in n['fenlei'] :
+##                Gnode_color.append('orange')
+##            elif 'toubaoren' in n['fenlei'] :
+##                Gnode_color.append('red')
+##            elif 'beibaoren' in n['fenlei']:
+##                Gnode_color.append('purple')
+##            elif 'zhanghao' in n['fenlei']:
+##                Gnode_color.append('gray')
+##            else:   # 无关
+##                Gnode_color.append('white')
+##        nx.draw_spring(lG,node_color=Gnode_color,with_labels=True,node_size=128,font_size=14)
+##        plt.savefig(com_dirname + '/figure.png')
+##        if(hasLoop):
+##            plt.savefig(loopdir+'/' + str(node_count) + '_' + str(com) + '.png')
+##        plt.clf()
+##        nx.draw_spring(lG,node_color=Gnode_color,with_labels=False,node_size=128,font_size=14)
+##        plt.savefig(com_dirname + '/figure_nolabel.png')
+##        if(hasLoop):
+##            plt.savefig(loopdir+'/' + str(node_count) + '_' + str(com) + 'nolabel.png')
+##        plt.clf()
+        ks.DataFrame(local_baoan).to_csv(com_dirname + '/local_baoan.csv',index=False,header=0)
+        ks.DataFrame(local_toubaoren).to_csv(com_dirname + '/local_toubaoren.csv',index=False,header=0)
+        ks.DataFrame(local_beibaoren).to_csv(com_dirname + '/local_beibaoren.csv',index=False,header=0)
+        ks.DataFrame(local_chezhu).to_csv(com_dirname + '/local_chezhu.csv',index=False,header=0)
+        ks.DataFrame(local_zhanghao).to_csv(com_dirname + '/local_zhanghao.csv',index=False,header=0)
+        ks.DataFrame(local_shangyuan).to_csv(com_dirname + '/local_shangyuan.csv',index=False,header=0)
+        ks.DataFrame(local_chengbaoche).to_csv(com_dirname + '/local_chengbaoche.csv',index=False,header=0)
+        ks.DataFrame(local_sanzheche).to_csv(com_dirname + '/local_sanzheche.csv',index=False,header=0)
+        ks.DataFrame(local_che).to_csv(com_dirname + '/local_che.csv',index=False,header=0)
+        ks.DataFrame(local_jiashiren).to_csv(com_dirname + '/local_jiashiren.csv',index=False,header=0)
+        nx.to_pandas_edgelist(lG).to_csv(com_dirname + '/edges.csv',index=False,header=False)
+        
         baoans = '|'.join(local_baoan)
         toubaorens = '|'.join(local_toubaoren)
         beibaorens = '|'.join(local_beibaoren)
