@@ -31,20 +31,29 @@ if samplenum == 0:
                              dtype={0:object,3:object,7:object,8:object})
     juesedata = ks.read_csv(indir + r'juese.csv',
                              dtype={0:object,2:object,3:object,7:object,8:object})
-    chesundata = ks.read_csv(indir + r'chesun.csv')
-    zhifudata = ks.read_csv(indir + r'zhifu.csv')
-    lipeidata = ks.read_csv(indir + r'renshang.csv')
+    chesundata = ks.read_csv(indir + r'chesun.csv',
+                             dtype={0:object})
+    zhifudataori = ks.read_csv(indir + r'zhifu.csv',
+                             dtype={0:object})
+    lipeidata = ks.read_csv(indir + r'renshang.csv',
+                             dtype={0:object})
 else:
     baodandata = ks.read_csv(indir + r'baodan.csv',nrows=samplenum,
                              dtype={0:object,3:object,7:object,8:object})
     juesedata = ks.read_csv(indir + r'juese.csv',
                              dtype={0:object,2:object,3:object,7:object,8:object},nrows=samplenum)
-    chesundata = ks.read_csv(indir + r'chesun.csv',nrows=samplenum)
-    zhifudata = ks.read_csv(indir + r'zhifu.csv',nrows=samplenum)
-    lipeidata = ks.read_csv(indir + r'renshang.csv',nrows=samplenum)
+    chesundata = ks.read_csv(indir + r'chesun.csv',nrows=samplenum,
+                             dtype={0:object})
+    zhifudataori = ks.read_csv(indir + r'zhifu.csv',nrows=samplenum,
+                             dtype={0:object})
+    lipeidata = ks.read_csv(indir + r'renshang.csv',nrows=samplenum,
+                             dtype={0:object})
+converters = {r'理赔ID': str}
+lipeiori = ks.read_excel('./zbx/' + r'理赔.xlsx',converters=converters)
+                           #dtype=str)
 
 # 报案ID-伤员
-shangyuan_baoan = lipeidata[[r'理赔ID',r'伤亡人员证件号码']]
+shangyuan_baoan = lipeidata[(lipeidata[r'人员属性']==2)][[r'理赔ID',r'伤亡人员证件号码']]
 shangyuan = shangyuan_baoan[[r'伤亡人员证件号码']].dropna().drop_duplicates()
 shangyuan_baoan_rename = shangyuan_baoan.rename(columns={r'伤亡人员证件号码':'Target',r'理赔ID':'Source'})\
                     .dropna().drop_duplicates()
@@ -68,6 +77,10 @@ chejia_beibaoren = chejia_ren[(chejia_ren[r'角色类型']==3)][[r'车架号',r'
 chejia_beibaoren_rename = chejia_beibaoren.rename(columns={r'身份证号':'Target',r'车架号':'Source'}).drop_duplicates().dropna()
 #chejia_beibaoren.count()
 
+# 保单合并
+hebingbaodan = ks.merge(toubaoren.rename(columns={r'身份证号':r'投保人'}),chejia_chezhu.rename(columns={r'身份证号':r'车主'}),on=r'车架号')
+hebingbaodan = ks.merge(hebingbaodan,chejia_beibaoren.rename(columns={r'身份证号':r'被保人'}),on=r'车架号')
+
 # 报案ID：是否承保车辆：车架
 baoan_chengbao_chejia = chesundata[[r'理赔ID',r'是否承保车辆',r'车架号']]
 
@@ -87,14 +100,14 @@ baoan_sanzheche_rename = baoan_sanzheche.rename(columns={r'车架号':'Target',r
 #baoan_sanzheche.count()
 
 # 车架-驾驶人
-chejia_jiashiren = chesundata[[r'车架号',r'驾驶证号码']]
+chejia_jiashiren = chesundata[[r'车架号',r'出险驾驶员证件号码']]
 # 驾驶人
-jiashiren = chesundata[[r'驾驶证号码']].drop_duplicates().dropna()
-chejia_jiashiren_rename = chejia_jiashiren.rename(columns={r'驾驶证号码':'Target',r'车架号':'Source'}).drop_duplicates().dropna()
+jiashiren = chesundata[[r'出险驾驶员证件号码']].drop_duplicates().dropna()
+chejia_jiashiren_rename = chejia_jiashiren.rename(columns={r'出险驾驶员证件号码':'Target',r'车架号':'Source'}).drop_duplicates().dropna()
 #chejia_jiashiren.count()
 
 # 理赔ID-收款身份证
-zhifudata = zhifudata[[r'理赔ID',r'收款身份证']]
+zhifudata = zhifudataori[[r'理赔ID',r'收款身份证']]
 zhifudata = zhifudata.drop_duplicates().dropna()
 baoan_shoukuanren_rename = zhifudata.rename(columns={r'收款身份证':'Target',r'理赔ID':'Source'})
 
@@ -361,8 +374,6 @@ for com in set(partition.values()):
                 Gnode_color.append('black')
             elif 'sanzheche' in n['fenlei'] :
                 Gnode_color.append('green')
-            elif 'che' in n['fenlei'] :
-                Gnode_color.append('yellow')
             elif 'shangyuan' in n['fenlei']:
                 Gnode_color.append('cyan')
             elif 'jiashiren' in n['fenlei'] :
@@ -375,6 +386,8 @@ for com in set(partition.values()):
                 Gnode_color.append('purple')
             elif 'shoukuanren' in n['fenlei']:
                 Gnode_color.append('gray')
+            elif 'che' in n['fenlei'] :
+                Gnode_color.append('yellow')
             else:   # 无关
                 Gnode_color.append('white')
         nx.draw_spring(lG,node_color=Gnode_color,with_labels=True,node_size=128,font_size=14)
@@ -399,20 +412,22 @@ for com in set(partition.values()):
         ks.DataFrame(local_jiashiren).to_csv(com_dirname + '/local_jiashiren.csv',index=False,header=0)
         nx.to_pandas_edgelist(lG).to_csv(com_dirname + '/edges.csv',index=False,header=False)
         
+        #baoans = '|'.join(list(map(str,local_baoan)))
         baoans = '|'.join(local_baoan)
+        chengbaoches = '|'.join(local_chengbaoche)
         #toubaorens = '|'.join(local_toubaoren)
         #beibaorens = '|'.join(local_beibaoren)
         #chezhus = '|'.join(local_chezhu)
 
         if(len(local_baoan)>0):    
-            local_chesundata = chesundata[(lipeidata[r'理赔ID'].str.contains(baoans))]
-            local_zhifudata = zhifudata[(chesundata[r'理赔ID'].str.contains(baoans))]
-            local_lipeidata = lipeidata[(chesundata[r'理赔ID'].str.contains(baoans))]
+            local_chesundata = chesundata[(chesundata[r'理赔ID'].str.contains(baoans))]
+            local_zhifudata = zhifudataori[(zhifudataori[r'理赔ID'].str.contains(baoans))]
+            local_lipeidata = lipeidata[(lipeidata[r'理赔ID'].str.contains(baoans))]
             local_chesundata.to_csv(com_dirname + r'/车损.csv',sep=',',index=False)
             local_zhifudata.to_csv(com_dirname + r'/支付.csv',sep=',',index=False)
-            local_lipeidata.to_csv(com_dirname + r'/理赔.csv',sep=',',index=False)
-        #if(len(local_chezhu) >0 or len(local_toubaoren)>0 or len(local_beibaoren)>0 ):
-        #    local_baodan = baodandata[(baodandata[r'车主证件号'].str.contains(chezhus) |
-        #                            baodandata[r'投保人证件号'].str.contains(toubaorens) |
-        #                            baodandata[r'被保人证件号'].str.contains(beibaorens) )]
-        #    local_baodan.to_csv(com_dirname + r'/保单信息.csv',sep=',',index=False)
+            local_lipeidata.to_csv(com_dirname + r'/人伤.csv',sep=',',index=False)
+            local_lipeiori = lipeiori[(lipeiori[r'理赔ID'].str.contains(baoans))]
+            local_lipeiori.to_csv(com_dirname + r'/理赔.csv',sep=',',index=False)
+        if(len(local_chengbaoche) >0 ):
+            local_baodan = hebingbaodan[(hebingbaodan[r'车架号'].str.contains(chengbaoches))]
+            local_baodan.to_csv(com_dirname + r'/保单信息.csv',sep=',',index=False)
